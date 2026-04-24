@@ -1,45 +1,37 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../context/AuthContext'; // EZ HIÁNYZOTT!
-import { X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { X } from 'lucide-react';
 
 export default function CreatePost({ onClose, onSuccess }) {
-  const { user, profile } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
-  
-  // Form állapotok
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [contact, setContact] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [contact, setContact] = useState(profile?.default_contact || '');
+  const [categories, setCategories] = useState([]);
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Kategóriák betöltése
+  // Kategóriák betöltése az adatbázisból
   useEffect(() => {
-    async function getCategories() {
+    const fetchCategories = async () => {
       const { data } = await supabase.from('categories').select('*');
       if (data) setCategories(data);
-    }
-    getCategories();
+    };
+    fetchCategories();
   }, []);
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
+    if (!user) return alert('Be kell jelentkezned!');
 
-    if (!user?.id) {
-      alert("Hiba: Nem vagy bejelentkezve vagy az azonosítás sikertelen!");
-      setLoading(false);
-      return;
-    }
-    
     setLoading(true);
 
     try {
       let imageUrl = null;
 
-      // 1. Képfeltöltés, ha van kiválasztva kép
+      // 1. Képfeltöltés (ha van kép)
       if (image) {
         const fileExt = image.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
@@ -51,27 +43,29 @@ export default function CreatePost({ onClose, onSuccess }) {
 
         if (uploadError) throw uploadError;
 
+        // Kép URL lekérése (v2 syntax)
         const { data } = supabase.storage
-  .from('post-images')
-  .getPublicUrl(filePath);
+          .from('post-images')
+          .getPublicUrl(filePath);
 
-imageUrl = data.publicUrl; // Az urlData helyett simán data.publicUrl
+        imageUrl = data.publicUrl;
       }
 
-      // 2. Poszt mentése az adatbázisba
+      // 2. Adatok mentése a posts táblába
       const { error } = await supabase.from('posts').insert([
         {
           user_id: user.id,
           title,
           description,
-          category_id: categoryId,
+          category_id: categoryId || null,
           contact_info: contact,
           image_url: imageUrl,
         },
       ]);
 
       if (error) throw error;
-      onSuccess();
+
+      onSuccess(); // Frissíti a listát és bezárja a modalt
     } catch (error) {
       alert(error.message);
     } finally {
@@ -80,105 +74,92 @@ imageUrl = data.publicUrl; // Az urlData helyett simán data.publicUrl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold dark:text-white">Új probléma kiírása</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
-            <X size={20} className="dark:text-gray-400" />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-xl font-black">Új probléma beküldése</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Cím */}
-          <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">Mi a probléma?</label>
-            <input
-              type="text"
-              required
-              placeholder="Pl: Matek korrepetálás kellene"
-              className="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Mi a probléma? (röviden)"
+            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
 
-          {/* Kategória */}
-          <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">Kategória</label>
-            <select
-              required
-              className="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white outline-none"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-            >
-              <option value="">Válassz kategóriát...</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
+          <textarea
+            placeholder="Részletes leírás..."
+            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 h-32"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
 
-          {/* Leírás */}
-          <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">Részletek</label>
-            <textarea
-              rows="3"
-              required
-              placeholder="Írd le pontosan, miben kérsz segítséget..."
-              className="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
+          <select
+            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">Válassz kategóriát (opcionális)</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
 
-          {/* Elérhetőség */}
-          <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">Messenger link (vagy más elérhetőség)</label>
-            <input
-              type="text"
-              required
-              placeholder="https://m.me/felhasznalonev"
-              className="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white outline-none"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Elérhetőség (pl. Messenger link, email)"
+            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+          />
 
-          {/* Képfeltöltés */}
-          <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">Kép csatolása (opcionális)</label>
-            <div className="relative group">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-500 dark:text-gray-400">Kép csatolása:</label>
+
+            <label className="relative cursor-pointer group">
+              {/* Ez a látható doboz */}
+              <div className="w-full py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all">
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                    {image ? image.name : "Kattints a kép kiválasztásához"}
+                  </p>
+                  <p className="text-xs text-gray-500">JPG, PNG vagy GIF (max. 50MB)</p>
+                </div>
+              </div>
+
+              {/* Ez a valódi input, amit elrejtünk, de a label miatt kattintható marad */}
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
-                id="file-upload"
                 onChange={(e) => setImage(e.target.files[0])}
               />
-              <label
-                htmlFor="file-upload"
-                className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer group-hover:border-blue-500 transition"
-              >
-                {image ? (
-                  <span className="text-sm text-blue-500 font-medium truncate">{image.name}</span>
-                ) : (
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <ImageIcon size={20} />
-                    <span className="text-sm">Kattints a kép kiválasztásához</span>
-                  </div>
-                )}
-              </label>
-            </div>
+            </label>
+
+            {/* Ha már választottál képet, mutassunk egy kis előnézetet (opcionális) */}
+            {image && (
+              <div className="mt-2 text-[10px] text-blue-500 font-bold flex items-center gap-1">
+                <span className="bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded-md">Kép kiválasztva! ✓</span>
+              </div>
+            )}
           </div>
 
-          {/* Küldés gomb */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/30"
           >
-            {loading ? <Loader2 className="animate-spin" /> : 'Posztolás'}
+            {loading ? 'Küldés folyamatban...' : 'Közzététel'}
           </button>
         </form>
       </div>

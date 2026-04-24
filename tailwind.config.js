@@ -1,5 +1,5 @@
-/** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class', // Ez mondja meg a Tailwindnek, hogy a .dark osztályt figyelje
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,4 +8,4 @@ export default {
     extend: {},
   },
   plugins: [],
-};
+}

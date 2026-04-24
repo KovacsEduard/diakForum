@@ -1,1 +1,68 @@
 @import "tailwindcss";
+
+:root {
+  --bg-body: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.8);
+  /* Világos módban egy nagyon halvány szürke */
+  --bg-image-placeholder: #f8fafc; 
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --bg-body: #020617;
+  --bg-card: #0f172a;
+  --bg-header: rgba(2, 6, 23, 0.8);
+  /* Sötét módban marad a sötétebb tónus */
+  --bg-image-placeholder: #1e293b; 
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #1e293b;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Kártya fixek */
+.custom-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+.custom-text-muted {
+  color: var(--text-muted);
+}
+
+.header-blur {
+  background-color: var(--bg-header);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Mindenre egy alap átmenet */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.image-placeholder {
+  background-color: var(--bg-image-placeholder);
+  transition: background-color 0.3s ease;
+}
+
+/* App.css kiegészítés */
+button {
+  cursor: pointer;
+  outline: none;
+}
+
+/* Ha azt szeretnéd, hogy a Nap ikon sárgán világítson sötét módban */
+.dark .text-yellow-400 {
+  filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4));
+}
