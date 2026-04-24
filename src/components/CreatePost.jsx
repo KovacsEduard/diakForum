@@ -27,6 +27,13 @@ export default function CreatePost({ onClose, onSuccess }) {
   const handleSubmit = async (e) => {
 
     e.preventDefault();
+
+    if (!user?.id) {
+      alert("Hiba: Nem vagy bejelentkezve vagy az azonosítás sikertelen!");
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
 
     try {
