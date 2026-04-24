@@ -51,11 +51,11 @@ export default function CreatePost({ onClose, onSuccess }) {
 
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage
-          .from('post-images')
-          .getPublicUrl(filePath);
-        
-        imageUrl = urlData.publicUrl;
+        const { data } = supabase.storage
+  .from('post-images')
+  .getPublicUrl(filePath);
+
+imageUrl = data.publicUrl; // Az urlData helyett simán data.publicUrl
       }
 
       // 2. Poszt mentése az adatbázisba
