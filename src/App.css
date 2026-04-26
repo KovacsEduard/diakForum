@@ -22,10 +22,12 @@
   --border: #1e293b;
 }
 
-body {
-  background-color: var(--bg-body);
-  color: var(--text-main);
+html, body {
   margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-body) !important; /* Az !important segít, ha valahol máshol maradt fix bg osztály */
+  color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -66,3 +68,4 @@ button {
 .dark .text-yellow-400 {
   filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4));
 }
+

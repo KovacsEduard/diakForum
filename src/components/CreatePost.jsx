@@ -22,9 +22,48 @@ export default function CreatePost({ onClose, onSuccess }) {
     fetchCategories();
   }, []);
 
+  // A PostForm-ban, ahol a beküldés van:
+  // Profil adat betöltése a bejelentkezett felhasználónak
+  useEffect(() => {
+    async function loadDefaultContact() {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('default_contact')
+          .eq('id', user.id)
+          .maybeSingle(); // single() helyett maybeSingle(), így nem dob hibát ha még nincs profil
+
+        if (data?.default_contact) {
+          setContact(data.default_contact);
+        }
+      } catch (err) {
+        console.error("Hiba az alapértelmezett név lekérésekor:", err);
+      }
+    }
+    loadDefaultContact();
+  }, [user]);
+
+const validateMessengerLink = (link) => {
+  if (!link) return false;
+  // Ellenőrzi, hogy a link tartalmazza-e a messengerre utaló kulcsszavakat
+  const messengerRegex = /^(https?:\/\/)?(www\.)?(m\.me|facebook\.com\/messages|fb\.me)\/.+/;
+  return messengerRegex.test(link);
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return alert('Be kell jelentkezned!');
+
+    if (!contact.trim()) {
+    return alert('Kérjük, add meg a Messenger elérhetőségedet!');
+  }
+
+  // 2. Ellenőrzés: Valódi Messenger link-e
+  if (!validateMessengerLink(contact)) {
+    return alert('Kérjük, érvényes Messenger linket adj meg! (Pl: https://m.me/felhasznalonev)');
+  }
 
     setLoading(true);
 
@@ -74,20 +113,27 @@ export default function CreatePost({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
-        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-xl font-black">Új probléma beküldése</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={24} />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+      {/* MÓDOSÍTOTT SZÍNEK: Használjuk a CSS változóidat, 
+         hogy a modál is váltson témát! 
+      */}
+      <div
+        style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border)' }}
+        className="w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300"
+      >
+        <div className="p-8 border-b flex justify-between items-center" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-2xl font-black">Új probléma beküldése</h2>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)' }} className="hover:scale-110 transition-transform">
+            <X size={28} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
           <input
             type="text"
             placeholder="Mi a probléma? (röviden)"
-            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
+            style={{ backgroundColor: 'var(--bg-body)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+            className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -95,49 +141,61 @@ export default function CreatePost({ onClose, onSuccess }) {
 
           <textarea
             placeholder="Részletes leírás..."
-            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 h-32"
+            style={{ backgroundColor: 'var(--bg-body)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+            className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all h-32 resize-none"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
 
-          <select
-            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
-            <option value="">Válassz kategóriát (opcionális)</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest ml-2" style={{ color: 'var(--text-muted)' }}>
+              Kategória
+            </label>
+            <select
+              style={{ backgroundColor: 'var(--bg-body)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+              className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all cursor-pointer"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">Válassz kategóriát (opcionális)</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
 
-          <input
-            type="text"
-            placeholder="Elérhetőség (pl. Messenger link, email)"
-            className="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-          />
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest ml-2" style={{ color: 'var(--text-muted)' }}>
+              Elérhetőség (Messenger link)
+            </label>
+            <input
+              type="text"
+              placeholder="https://m.me/felhasznalonev"
+              style={{ backgroundColor: 'var(--bg-body)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+              className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+          </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-gray-500 dark:text-gray-400">Kép csatolása:</label>
+            <label className="text-[10px] font-black uppercase tracking-widest ml-2" style={{ color: 'var(--text-muted)' }}>
+              Kép csatolása (opcionális)
+            </label>
 
             <label className="relative cursor-pointer group">
-              {/* Ez a látható doboz */}
-              <div className="w-full py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all">
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+              <div
+                style={{ backgroundColor: 'var(--bg-body)', borderColor: 'var(--border)' }}
+                className="w-full py-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 transition-all"
+              >
+                <div className="text-blue-500 group-hover:scale-110 transition-transform">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                    {image ? image.name : "Kattints a kép kiválasztásához"}
-                  </p>
-                  <p className="text-xs text-gray-500">JPG, PNG vagy GIF (max. 50MB)</p>
-                </div>
+                <p className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>
+                  {image ? image.name : "Fájl kiválasztása"}
+                </p>
               </div>
-
-              {/* Ez a valódi input, amit elrejtünk, de a label miatt kattintható marad */}
               <input
                 type="file"
                 accept="image/*"
@@ -145,21 +203,14 @@ export default function CreatePost({ onClose, onSuccess }) {
                 onChange={(e) => setImage(e.target.files[0])}
               />
             </label>
-
-            {/* Ha már választottál képet, mutassunk egy kis előnézetet (opcionális) */}
-            {image && (
-              <div className="mt-2 text-[10px] text-blue-500 font-bold flex items-center gap-1">
-                <span className="bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded-md">Kép kiválasztva! ✓</span>
-              </div>
-            )}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/30"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-[1.5rem] transition-all shadow-lg shadow-blue-500/25 active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Küldés folyamatban...' : 'Közzététel'}
+            {loading ? 'Feltöltés...' : 'Közzététel'}
           </button>
         </form>
       </div>
