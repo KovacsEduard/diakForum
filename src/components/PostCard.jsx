@@ -35,6 +35,18 @@ export default function PostCard({ post, onUpdate }) {
         }
     };
 
+    const getDefaultImageUrl = (categoryName) => {
+        switch (categoryName?.toLowerCase()) {
+            case 'tanulás':
+            return 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop&q=60'; // Pl. könyvek/tanulás
+            case 'buli':
+            return 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=60'; // Pl. esemény/buli
+            case 'egyéb':
+            default:
+            return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=60'; // Pl. általános technológia/egyéb
+        }
+    };
+
 
 
     return (
@@ -60,14 +72,18 @@ export default function PostCard({ post, onUpdate }) {
                             </div>
                         </>
                     ) : (
-                        /* Ha nincs kép, a placeholder háttér és egy halvány ikon látszik */
-                        <div className="text-slate-300 dark:text-slate-700 transition-colors">
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                                <circle cx="9" cy="9" r="2" />
-                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                            </svg>
-                        </div>
+                        <>
+                            <img
+                                src={getDefaultImageUrl(post.categories?.name)}
+                                alt=""
+                                className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span className="opacity-0 group-hover:opacity-100 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold transition-opacity">
+                                    Kattints a nagyításhoz
+                                </span>
+                            </div>
+                        </>
                     )}
                 </div>
 
