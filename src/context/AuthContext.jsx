@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     // Aktuális session lekérése
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -20,6 +20,15 @@ export const AuthProvider = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+      
+      // ITT A LÉNYEG: Ha a jelszó-visszaállítási linkről jött a felhasználó
+      if (event === 'PASSWORD_RECOVERY') {
+        // Átirányítjuk a jelszófrissítő oldalra, figyelembe véve a GitHub Pages alkönyvtárát (basename)
+        const basePath = window.location.hostname === 'localhost' ? '' : '/diakForum';
+        window.location.href = `${window.location.origin}${basePath}/update-password`;
+        return;
+      }
+
       if (currentUser) {
         fetchProfile(currentUser.id);
       } else {

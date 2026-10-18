@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // <--- ÚJ: Jelszó láthatóság state
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -29,8 +30,6 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Biztosítjuk, hogy a /diakForum/ alkönyvtárral térjen vissza, 
-          // függetlenül attól, hogy lokálisan vagy élesben fut-e
           redirectTo: window.location.hostname === 'localhost'
             ? `${window.location.origin}/`
             : `${window.location.origin}/diakForum/`
@@ -51,14 +50,14 @@ export default function Login() {
 
       <div className="w-full max-w-md rounded-[2.5rem] p-8 border shadow-2xl relative z-10 backdrop-blur-xl" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
 
-        {/* MÁRKA ÉS LOGÓ MEGJELENÍTÉS (Azonnal látszik, hová lép be!) */}
+        {/* MÁRKA ÉS LOGÓ MEGJELENÍTÉS */}
         <div className="text-center space-y-3 mb-8">
           <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 shadow-inner">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt="DiákFórum Logo"
               className="w-20 h-20 object-cover rounded-xl shadow-md"
-              onError={(e) => { e.target.style.display = 'none'; }} // Biztonsági fallback, ha nem töltené be
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
 
@@ -84,7 +83,7 @@ export default function Login() {
               Email cím
             </label>
             <input
-              type="email5"
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -98,16 +97,34 @@ export default function Login() {
             <label className="block text-[11px] font-black uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
               Jelszó
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              style={{ backgroundColor: 'var(--bg-main)', borderColor: 'var(--border)', color: 'var(--text-main)' }}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'} // <--- Dinamikusan váltja a típust
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 pr-12 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                style={{ backgroundColor: 'var(--bg-main)', borderColor: 'var(--border)', color: 'var(--text-main)' }}
+                placeholder="••••••••"
+              />
+              {/* Szem ikon gomb a jelszó mutatásához/elrejtéséhez */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-lg focus:outline-none opacity-75 hover:opacity-100 transition-opacity cursor-pointer"
+                title={showPassword ? 'Jelszó elrejtése' : 'Jelszó megjelenítése'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
+
+                  {/* ELFELEJTETT JELSZÓ LINK */}
+        <div className="auth-links" style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <Link to="/forgot-password" className="text-xs font-semibold hover:underline" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>
+            Elfelejtetted a jelszavad?
+          </Link>
+        </div>
 
           <button
             type="submit"
@@ -130,7 +147,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* GOOGLE BEJELENTKEZÉS GOMB (A plakát dizájnjához igazított prémium kerettel) */}
+        {/* GOOGLE BEJELENTKEZÉS GOMB */}
         <button
           type="button"
           onClick={handleGoogleLogin}
