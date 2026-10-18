@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { X, HelpCircle, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { X, HelpCircle, Image as ImageIcon, Sparkles, ChevronDown } from 'lucide-react';
 
 export default function CreatePost({ onClose, onSuccess }) {
   const { user } = useAuth();
@@ -13,6 +13,8 @@ export default function CreatePost({ onClose, onSuccess }) {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false); // Súgó modál állapota
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false); // Custom dropdown nyitási állapota
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Kategóriák betöltése az adatbázisból
   useEffect(() => {
@@ -96,6 +98,7 @@ export default function CreatePost({ onClose, onSuccess }) {
           category_id: categoryId || null,
           contact_info: contact,
           image_url: imageUrl,
+          is_anonymous: isAnonymous,
         },
       ]);
 
@@ -108,6 +111,8 @@ export default function CreatePost({ onClose, onSuccess }) {
       setLoading(false);
     }
   };
+
+  const selectedCategoryObj = categories.find((c) => c.id === categoryId);
 
   return (
     <>
@@ -124,7 +129,7 @@ export default function CreatePost({ onClose, onSuccess }) {
               </span>
               <h2 className="text-2xl font-black">Új probléma beküldése</h2>
             </div>
-            <button onClick={onClose} style={{ color: 'var(--text-muted)' }} className="p-2 hover:bg-slate-500/10 rounded-full transition-all">
+            <button onClick={onClose} style={{ color: 'var(--text-muted)' }} className="p-2 hover:bg-slate-500/10 rounded-full transition-all cursor-pointer">
               <X size={24} />
             </button>
           </div>
@@ -159,21 +164,89 @@ export default function CreatePost({ onClose, onSuccess }) {
               />
             </div>
 
-            <div className="space-y-1.5">
+            {/* EGYEDI LÁTVÁNYOS DROPDOWN MENÜ A KATEGÓRIÁKHOZ */}
+            <div className="space-y-1.5 relative">
               <label className="block text-[11px] font-black uppercase tracking-wider ml-2" style={{ color: 'var(--text-muted)' }}>
                 Kategória
               </label>
-              <select
+
+              {/* Kategória kiválasztó gomb */}
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                 style={{ backgroundColor: 'var(--bg-body)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
-                className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all cursor-pointer font-medium text-sm"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full p-4 rounded-2xl border outline-none focus:ring-2 ring-blue-500 transition-all font-medium text-sm flex items-center justify-between cursor-pointer"
               >
-                <option value="">Válassz kategóriát (opcionális)</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+                <span>
+                  {selectedCategoryObj ? selectedCategoryObj.name : 'Válassz kategóriát (opcionális)'}
+                </span>
+                <ChevronDown size={18} className={`transition-transform duration-200 opacity-70 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Legördülő menü választható elemekkel */}
+              {isCategoryOpen && (
+                <div
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+                  className="absolute left-0 right-0 mt-2 rounded-2xl border shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 max-h-56 overflow-y-auto"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryId('');
+                      setIsCategoryOpen(false);
+                    }}
+                    className={`w-full px-5 py-3 text-left text-xs font-black uppercase tracking-wider flex items-center transition-colors cursor-pointer ${!categoryId ? 'bg-blue-600 text-white' : 'hover:bg-blue-500/10 text-gray-300 hover:text-white'
+                      }`}
+                  >
+                    Válassz kategóriát (opcionális)
+                  </button>
+
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setCategoryId(cat.id);
+                        setIsCategoryOpen(false);
+                      }}
+                      className={`w-full px-5 py-3 text-left text-xs font-black uppercase tracking-wider flex items-center transition-colors cursor-pointer ${categoryId === cat.id
+                          ? 'bg-blue-600 text-white'
+                          : 'hover:bg-blue-500/10 text-gray-300 hover:text-white'
+                        }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* NÉVTELEN POSZTOLÁS KAPCSOLÓ */}
+            <div
+              style={{ backgroundColor: 'var(--bg-body)', borderColor: 'var(--border)' }}
+              className="p-4 rounded-2xl border flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🎭</span>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--text-main)' }}>
+                    Közzététel névtelenül
+                  </p>
+                  <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                    A neved és profilképed rejtve marad a többi diák előtt.
+                  </p>
+                </div>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
             </div>
 
             <div className="space-y-1.5">
@@ -253,7 +326,7 @@ export default function CreatePost({ onClose, onSuccess }) {
               <button
                 onClick={() => setIsHelpOpen(false)}
                 style={{ color: 'var(--text-muted)' }}
-                className="hover:opacity-80 font-bold text-lg p-1"
+                className="hover:opacity-80 font-bold text-lg p-1 cursor-pointer"
               >
                 ✕
               </button>

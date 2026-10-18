@@ -5,6 +5,7 @@ import CreatePost from '../components/CreatePost';
 import PostCard from '../components/PostCard';
 import Header from '../components/Header';
 import { ArrowUp, Sparkles, Filter, ChevronDown, Check } from 'lucide-react';
+import Leaderboard from '../components/Leaderboard';
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -19,7 +20,7 @@ export default function Home() {
   // Állapotok az egyedi lenyíló menükhöz
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  
+
   const categoryRef = useRef(null);
   const sortRef = useRef(null);
 
@@ -50,7 +51,7 @@ export default function Home() {
 
     let query = supabase
       .from('posts')
-      .select('*, categories(name, color_code), profiles(full_name, avatar_url, default_contact)');
+      .select('*, categories(name, color_code), profiles(full_name, avatar_url, default_contact, points, rank_title)');
 
     if (selectedCategory !== 'all') {
       query = query.eq('category_id', selectedCategory);
@@ -91,8 +92,8 @@ export default function Home() {
   };
 
   // Aktuális kategória neve a gombon
-  const currentCategoryName = selectedCategory === 'all' 
-    ? 'Minden kategória' 
+  const currentCategoryName = selectedCategory === 'all'
+    ? 'Minden kategória'
     : categories.find(c => c.id === selectedCategory)?.name || 'Kategória';
 
   const currentSortName = sortOrder === 'desc' ? 'Legújabb elöl' : 'Legrégebbi elöl';
@@ -100,14 +101,14 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-16" style={{ backgroundColor: 'var(--bg-main)' }}>
       <Header user={user} onSignOut={signOut} />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
 
         {/* HERO / ÜDVÖZLŐ SÁV */}
         <div className="mb-10 p-8 rounded-[2.5rem] relative overflow-hidden border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
           <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div className="space-y-2 relative z-10 text-center md:text-left">
+
+          <div className="space-y-2 relative text-center md:text-left">
             <span className="text-[11px] font-black uppercase tracking-widest text-blue-500 flex items-center justify-center md:justify-start gap-1">
               <Sparkles size={14} /> DiákFórum Közösségi Hub
             </span>
@@ -121,7 +122,7 @@ export default function Home() {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/25 transition-all text-sm uppercase tracking-wider whitespace-nowrap cursor-pointer active:scale-95"
+            className="relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/25 transition-all text-sm uppercase tracking-wider whitespace-nowrap cursor-pointer active:scale-95"
           >
             + Új probléma megosztása
           </button>
@@ -134,7 +135,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            
+
             {/* 1. EGYEDI KATEGÓRIA DROPDOWN */}
             <div className="relative" ref={categoryRef}>
               <button
@@ -147,7 +148,7 @@ export default function Home() {
               </button>
 
               {isCategoryOpen && (
-                <div 
+                <div
                   style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
                   className="absolute right-0 mt-2 w-56 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
                 >
@@ -184,7 +185,7 @@ export default function Home() {
               </button>
 
               {isSortOpen && (
-                <div 
+                <div
                   style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
                   className="absolute right-0 mt-2 w-52 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
                 >
@@ -209,26 +210,39 @@ export default function Home() {
           </div>
         </div>
 
-        {/* POSZTOK LISTÁJA */}
+        {/* POSZTOK LISTÁJA ÉS RANGLISTA ELRENDEZÉS */}
         {loading ? (
           <div className="text-center py-24 opacity-60 font-bold animate-pulse text-sm">Posztok betöltése folyamatban...</div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-24 rounded-[2.5rem] border border-dashed opacity-75 space-y-2" style={{ borderColor: 'var(--border)' }}>
-            <p className="font-bold text-base">Nincs találat a kiválasztott szűrők alapján.</p>
-            <p className="text-xs opacity-60">Próbálj meg másik kategóriát választani vagy hozz létre egy új bejegyzést!</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 text-center py-24 rounded-[2.5rem] border border-dashed opacity-75 space-y-2" style={{ borderColor: 'var(--border)' }}>
+              <p className="font-bold text-base">Nincs találat a kiválasztott szűrők alapján.</p>
+              <p className="text-xs opacity-60">Próbálj meg másik kategóriát választani vagy hozz létre egy új bejegyzést!</p>
+            </div>
+            <div className="lg:col-span-1">
+              <Leaderboard />
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.path || posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={{
-                  ...post,
-                  categories: post.categories || { name: 'Egyéb', color_code: '#3b82f6' }
-                }}
-                onUpdate={fetchPosts}
-              />
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* POSZTOK KÁRTYÁI (2 oszlop szélesség nagy képernyőn) */}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {posts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={{
+                    ...post,
+                    categories: post.categories || { name: 'Egyéb', color_code: '#3b82f6' }
+                  }}
+                  onUpdate={fetchPosts}
+                />
+              ))}
+            </div>
+
+            {/* JOBB OLDALI SÁV: RANGLISTA (1 oszlop szélesség nagy képernyőn) */}
+            <div className="lg:col-span-1 sticky top-24">
+              <Leaderboard />
+            </div>
           </div>
         )}
 

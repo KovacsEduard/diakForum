@@ -32,14 +32,20 @@ export default function PostCard({ post, onUpdate }) {
     const getDefaultImageUrl = (categoryName) => {
         const baseUrl = import.meta.env.BASE_URL;
         switch (categoryName?.toLowerCase()) {
-            case 'tanulás':
-                return `${baseUrl}tanulas.avif`;
-            case 'buli':
-                return `${baseUrl}buli.avif`;
-            case 'elveszett tárgyak':
-                return `${baseUrl}elveszettTargyak.jpg`;
-            case 'egyéb':
+            case '🧩 egyéb / vegyes':
                 return `${baseUrl}egyeb.avif`;
+            case '🔍 elveszett tárgyak':
+                return `${baseUrl}elveszettTargyak.avif`;
+            case '🎮 közösség & programok':
+                return `${baseUrl}kozosseg.avif`;
+            case 'buli🍔 menza & büfé':
+                return `${baseUrl}menza.avif`;
+            case '💡 sulis ötletek & fejlesztések':
+                return `${baseUrl}otletek.avif`;
+            case '🆘 segítség & tanácsadás':
+                return `${baseUrl}segitseg.avif`;
+            case '📚 tanulás & korrepetálásulás':
+                return `${baseUrl}tanulas.avif`;
             default:
                 return `${baseUrl}egyeb.avif`;
         }
@@ -69,17 +75,17 @@ export default function PostCard({ post, onUpdate }) {
 
                 {/* KÉPKERET - Fix magasság, zoom effekttel */}
                 <div
-                    className="w-full h-52 image-placeholder flex items-center justify-center overflow-hidden relative cursor-pointer"
-                    onClick={() => post.image_url && setIsImageOpen(true)}
+                    className="w-full h-52 image-placeholder flex items-center justify-center overflow-hidden relative cursor-zoom-in group/image"
+                    onClick={() => setIsImageOpen(true)}
                 >
                     <img
                         src={post.image_url || getDefaultImageUrl(post.categories?.name)}
                         alt={post.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/image:scale-110"
                     />
-                    
+
                     {/* Üveghatású overlay nagyítási felirattal */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-end p-4 pointer-events-none">
                         <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-xl text-[11px] font-bold tracking-wide shadow-lg">
                             Kattints a nagyításhoz 🔍
                         </span>
@@ -93,16 +99,38 @@ export default function PostCard({ post, onUpdate }) {
                     )}
                 </div>
 
+                {/* FULLSCREEN IMAGE MODAL - Teljes képernyős képnagyító */}
+                {isImageOpen && (
+                    <div
+                        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-200"
+                        onClick={() => setIsImageOpen(false)}
+                    >
+                        <button
+                            className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors p-3 bg-white/10 rounded-full cursor-pointer"
+                            onClick={() => setIsImageOpen(false)}
+                        >
+                            <X size={28} />
+                        </button>
+
+                        <img
+                            src={post.image_url || getDefaultImageUrl(post.categories?.name)}
+                            alt={post.title}
+                            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                )}
+
                 {/* TARTALOM RÉSZ */}
                 <div className="p-6 flex flex-col flex-1 justify-between">
                     <div className="cursor-pointer" onClick={() => setIsPostOpen(true)}>
-                        
+
                         {/* Kategória és Időbélyeg elrendezése */}
                         <div className="flex justify-between items-center mb-3">
                             <span className="px-3 py-1 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider border border-blue-500/20">
                                 {post.categories?.name || 'Egyéb'}
                             </span>
-                            
+
                             <div className="flex items-center gap-1 text-[11px] opacity-60 font-medium">
                                 <Clock size={12} />
                                 <span>{formatTimeAgo(post.created_at)}</span>
@@ -120,38 +148,79 @@ export default function PostCard({ post, onUpdate }) {
                         </p>
                     </div>
 
-                    {/* LÁBLÉC / AKCIÓK */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center gap-2">
-                        <button
-                            onClick={() => setIsPostOpen(true)}
-                            className="text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:opacity-80 transition-opacity"
-                        >
-                            Részletek megnyitása →
-                        </button>
+                    {/* LÁBLÉC: SZERZŐ ADATAI, RANG ÉS AKCIÓK (MOST MÁR ITT IS LÁTSZIK MEGNYITÁS NÉLKÜL) */}
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 space-y-4">
 
-                        <div className="flex items-center gap-2">
-                            {/* Messenger gomb / Kapcsolat */}
-                            <a 
-                                href={post.profiles?.default_contact || post.contact_info} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="p-2.5 rounded-xl bg-blue-600/10 hover:bg-blue-600 hover:text-white text-blue-600 transition-all shadow-sm"
-                                title="Kapcsolatfelvétel"
-                            >
-                                <MessageCircle size={18} />
-                            </a>
-
-                            {/* Törlés gomb (ha saját vagy admin) */}
-                            {(user?.id === post.user_id || profile?.is_admin) && (
-                                <button 
-                                    onClick={handleDelete} 
-                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 transition-all shadow-sm"
-                                    title="Poszt törlése"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            )}
+                        {/* Szerző info sáv */}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                                <div className="w-9 h-9 rounded-xl overflow-hidden bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0">
+                                    {post.is_anonymous ? (
+                                        <span className="text-base">🎭</span>
+                                    ) : post.profiles?.avatar_url ? (
+                                        <img src={post.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <span className="font-black text-xs text-blue-500">{post.profiles?.full_name?.charAt(0) || 'D'}</span>
+                                    )}
+                                </div>
+                                <div className="truncate">
+                                    <div className="flex items-center gap-1.5">
+                                        <p className="text-xs font-black uppercase tracking-wide truncate">
+                                            {post.is_anonymous ? 'Névtelen Diák' : (post.profiles?.full_name || 'Ismeretlen')}
+                                        </p>
+                                    </div>
+                                    {!post.is_anonymous && (
+                                        <span className={`inline-block px-2 py-0.2 rounded-full text-[8px] uppercase tracking-wider border mt-0.5 ${post.profiles?.rank_title === '🔥 Suli Legenda'
+                                            ? 'bg-red-500/15 border-red-500/50 text-red-400 font-black shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse'
+                                            : post.profiles?.rank_title === '⚡ Arany Főnök'
+                                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold'
+                                                : post.profiles?.rank_title === '⭐ Top Segítő'
+                                                    ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 font-bold'
+                                                    : post.profiles?.rank_title === '🛡️ Aktív Diák'
+                                                        ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-semibold'
+                                                        : 'bg-slate-500/10 border-slate-500/20 text-gray-400 font-normal'
+                                            }`}>
+                                            {post.profiles?.rank_title || '🌱 Újonc Tag'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Alsó gombok sávja */}
+                        <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/40">
+                            <button
+                                onClick={() => setIsPostOpen(true)}
+                                className="text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:opacity-80 transition-opacity"
+                            >
+                                Részletek megnyitása →
+                            </button>
+
+                            <div className="flex items-center gap-2">
+                                {!post.is_anonymous && (
+                                    <a
+                                        href={post.profiles?.default_contact || post.contact_info}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2.5 rounded-xl bg-blue-600/10 hover:bg-blue-600 hover:text-white text-blue-600 transition-all shadow-sm"
+                                        title="Kapcsolatfelvétel"
+                                    >
+                                        <MessageCircle size={18} />
+                                    </a>
+                                )}
+
+                                {(user?.id === post.user_id || profile?.is_admin) && (
+                                    <button
+                                        onClick={handleDelete}
+                                        className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 transition-all shadow-sm"
+                                        title="Poszt törlése"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -163,14 +232,14 @@ export default function PostCard({ post, onUpdate }) {
                     onClick={() => setIsImageOpen(false)}
                 >
                     <button
-                        className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors p-3 bg-white/10 rounded-full"
+                        className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors p-3 bg-white/10 rounded-full cursor-pointer"
                         onClick={() => setIsImageOpen(false)}
                     >
                         <X size={28} />
                     </button>
 
                     <img
-                        src={post.image_url}
+                        src={post.image_url || getDefaultImageUrl(post.categories?.name)}
                         alt={post.title}
                         className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
                         onClick={(e) => e.stopPropagation()}
@@ -180,8 +249,8 @@ export default function PostCard({ post, onUpdate }) {
 
             {/* FULLSCREEN POST MODAL */}
             {isPostOpen && (
-                <div 
-                    className="fixed inset-0 z-[110] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" 
+                <div
+                    className="fixed inset-0 z-[110] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
                     onClick={() => setIsPostOpen(false)}
                 >
                     <div
@@ -190,8 +259,8 @@ export default function PostCard({ post, onUpdate }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Bezáró gomb */}
-                        <button 
-                            onClick={() => setIsPostOpen(false)} 
+                        <button
+                            onClick={() => setIsPostOpen(false)}
                             className="absolute top-5 right-5 z-20 p-2.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors backdrop-blur-md"
                         >
                             <X size={20} />
@@ -223,30 +292,60 @@ export default function PostCard({ post, onUpdate }) {
                                 "{post.description}"
                             </div>
 
-                            {/* Profil adatok és Kapcsolat */}
                             <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+                                {/* SZERZŐ PROFILKÉPE, NEVE ÉS RANGJA */}
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 rounded-2xl overflow-hidden bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                                        {post.profiles?.avatar_url ? (
+                                        {post.is_anonymous ? (
+                                            <span className="text-xl">🎭</span>
+                                        ) : post.profiles?.avatar_url ? (
                                             <img src={post.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
                                         ) : (
                                             <span className="font-black text-blue-500">{post.profiles?.full_name?.charAt(0) || 'D'}</span>
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black uppercase tracking-wide">{post.profiles?.full_name || 'Ismeretlen felhasználó'}</p>
-                                        <p className="text-xs opacity-60">Posztoló diák</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-black uppercase tracking-wide">
+                                                {post.is_anonymous ? 'Névtelen Diák' : (post.profiles?.full_name || 'Ismeretlen felhasználó')}
+                                            </p>
+
+                                            {!post.is_anonymous && (
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-wider border ${post.profiles?.rank_title === '🔥 Suli Legenda'
+                                                    ? 'bg-red-500/15 border-red-500/50 text-red-400 font-black shadow-[0_0_15px_rgba(239,68,68,0.4)] animate-pulse'
+                                                    : post.profiles?.rank_title === '⚡ Arany Főnök'
+                                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold'
+                                                        : post.profiles?.rank_title === '⭐ Top Segítő'
+                                                            ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 font-bold'
+                                                            : post.profiles?.rank_title === '🛡️ Aktív Diák'
+                                                                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-semibold'
+                                                                : 'bg-slate-500/10 border-slate-500/20 text-gray-400 font-normal'
+                                                    }`}>
+                                                    {post.profiles?.rank_title || '🌱 Újonc Tag'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs opacity-60">
+                                            {post.is_anonymous ? 'Rejtett közösségi tag' : `${post.profiles?.points || 10} pont`}
+                                        </p>
                                     </div>
                                 </div>
 
-                                <a
-                                    href={post.profiles?.default_contact || post.contact_info}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-500/25 cursor-pointer active:scale-95"
-                                >
-                                    <MessageCircle size={18} /> Segítek a megoldásban
-                                </a>
+                                {/* MESSENGER GOMB VAGY NÉVTELEN JELZÉS */}
+                                {post.is_anonymous ? (
+                                    <div className="px-4 py-2.5 rounded-2xl bg-slate-500/10 border border-slate-500/20 text-xs font-bold text-gray-400 flex items-center gap-2">
+                                        <span>🔒</span> Névtelen poszt
+                                    </div>
+                                ) : (
+                                    <a
+                                        href={post.contact_info || post.profiles?.default_contact}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-500/25 cursor-pointer active:scale-95"
+                                    >
+                                        <MessageCircle size={18} /> Segítek a megoldásban
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
