@@ -68,6 +68,22 @@ export default function PostCard({ post, onUpdate }) {
         return date.toLocaleDateString('hu-HU');
     };
 
+    // Ezt beleteheted a komponensbe a return elé:
+const getRankStyle = (rankTitle) => {
+    switch (rankTitle) {
+        case '🔥 Suli Legenda':
+            return 'bg-red-500/15 border-red-500/50 text-red-400 font-black shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse';
+        case '⚡ Arany Főnök':
+            return 'bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold';
+        case '⭐ Top Segítő':
+            return 'bg-blue-500/15 border-blue-500/30 text-blue-400 font-bold';
+        case '🛡️ Aktív Diák':
+            return 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-semibold';
+        default:
+            return 'bg-slate-500/10 border-slate-500/20 text-gray-400 font-normal';
+    }
+};
+
     return (
         <>
             {/* PRÉMIUM DESIGN KÁRTYA: Egyedi szegély, lágy hover árnyék és finom scale */}
@@ -310,20 +326,11 @@ export default function PostCard({ post, onUpdate }) {
                                                 {post.is_anonymous ? 'Névtelen Diák' : (post.profiles?.full_name || 'Ismeretlen felhasználó')}
                                             </p>
 
-                                            {!post.is_anonymous && (
-                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-wider border ${post.profiles?.rank_title === '🔥 Suli Legenda'
-                                                    ? 'bg-red-500/15 border-red-500/50 text-red-400 font-black shadow-[0_0_15px_rgba(239,68,68,0.4)] animate-pulse'
-                                                    : post.profiles?.rank_title === '⚡ Arany Főnök'
-                                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold'
-                                                        : post.profiles?.rank_title === '⭐ Top Segítő'
-                                                            ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 font-bold'
-                                                            : post.profiles?.rank_title === '🛡️ Aktív Diák'
-                                                                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-semibold'
-                                                                : 'bg-slate-500/10 border-slate-500/20 text-gray-400 font-normal'
-                                                    }`}>
-                                                    {post.profiles?.rank_title || '🌱 Újonc Tag'}
-                                                </span>
-                                            )}
+                                           {!post.is_anonymous && (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-[8px] uppercase tracking-wider border mt-0.5 ${getRankStyle(post.profiles?.rank_title)}`}>
+        {post.profiles?.rank_title || '🌱 Újonc Tag'}
+    </span>
+)}
                                         </div>
                                         <p className="text-xs opacity-60">
                                             {post.is_anonymous ? 'Rejtett közösségi tag' : `${post.profiles?.points || 10} pont`}
