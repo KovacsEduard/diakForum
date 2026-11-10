@@ -23,7 +23,7 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      // Sikeres bejelentkezés, irány a főoldal
+      // Sikeres bejelentkezésk, irány a főoldal
       navigate('/');
 
     } catch (err) {
