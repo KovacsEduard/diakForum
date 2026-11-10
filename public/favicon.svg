@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Háttér pajzs / lekerekített kártya a mély éjféli kék tónusban -->
+  <rect width="512" height="512" rx="128" fill="#0b0f19"/>
+  
+  <!-- Külső elektromos kék ragyogó keret -->
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="none" stroke="#3b82f6" stroke-width="24"/>
+  
+  <!-- A karakteres Sárga sapka / elem a plakátról -->
+  <path d="M120 240 C120 150 190 100 256 100 C322 100 392 150 392 240 Z" fill="#facc15"/>
+  
+  <!-- Vastag, figyelemfelkeltő "D" betű a közepén -->
+  <text x="50%" y="62%" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="240" fill="#ffffff" text-anchor="middle">D</text>
+</svg>
