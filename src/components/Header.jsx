@@ -1,4 +1,4 @@
-import { LogOut, User, Sun, Moon, X, Save, Loader2, Camera, Sparkles } from 'lucide-react';
+import { LogOut, User, Sun, Moon, X, Save, Loader2, Camera, Sparkles, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -106,7 +106,18 @@ export default function Header({ user, onSignOut }) {
         </div>
 
         {/* VEZÉRLŐ GOMBOK */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href="https://kovacseduard.github.io/diakForumLanding/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 py-2.5 rounded-2xl custom-card shadow-sm hover:scale-105 hover:border-blue-500 hover:text-blue-500 transition-all border border-slate-200 dark:border-slate-800 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider whitespace-nowrap"
+            title="Ugrás a DiákFórum landing oldalra"
+          >
+            <span className="hidden sm:inline">Landing oldal</span>
+            <ExternalLink size={15} />
+          </a>
+
           <button 
             onClick={() => setDarkMode(!darkMode)} 
             className="p-3 rounded-2xl bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-yellow-400 hover:scale-105 transition-all shadow-sm cursor-pointer"
