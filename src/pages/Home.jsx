@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import CreatePost from '../components/CreatePost';
 import PostCard from '../components/PostCard';
 import Header from '../components/Header';
+import { Footer } from '../components/LegalModal';
 import { ArrowUp, Sparkles, Filter, ChevronDown, Check } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
 
@@ -46,11 +47,11 @@ export default function Home() {
     fetchCategories();
   }, []);
 
-const fetchPosts = async () => {
+  const fetchPosts = async () => {
     setLoading(true);
 
     try {
-     let query = supabase
+      let query = supabase
         .from('posts')
         .select(`
           *,
@@ -111,155 +112,178 @@ const fetchPosts = async () => {
 
   const currentSortName = sortOrder === 'desc' ? 'Legújabb elöl' : 'Legrégebbi elöl';
 
-  // 1. Aktív (nem megoldott) posztok
-  const activePosts = posts.filter(post => !post.is_solved);
-
-  // 2. Megoldott posztok (a végén, külön szekcióban)
-  const solvedPosts = posts.filter(post => post.is_solved);
-
   return (
-    <div className="min-h-screen pb-16" style={{ backgroundColor: 'var(--bg-main)' }}>
-      <Header user={user} onSignOut={signOut} />
+    <div className="min-h-screen flex flex-col justify-between" style={{ backgroundColor: 'var(--bg-main)' }}>
+      <div className="flex-1">
+        <Header user={user} onSignOut={signOut} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-8">
 
-        {/* HERO / ÜDVÖZLŐ SÁV */}
-        <div className="mb-10 p-8 rounded-[2.5rem] relative overflow-hidden border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
-          <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          {/* HERO / ÜDVÖZLŐ SÁV */}
+          <div className="mb-10 p-8 rounded-[2.5rem] relative overflow-hidden border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div className="space-y-2 relative text-center md:text-left">
-            <span className="text-[11px] font-black uppercase tracking-widest text-blue-500 flex items-center justify-center md:justify-start gap-1">
-              <Sparkles size={14} /> DiákFórum Közösségi Hub
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Aktuális segélykérések
-            </h2>
-            <p className="text-xs sm:text-sm font-medium opacity-75 max-w-xl" style={{ color: 'var(--text-muted)' }}>
-              Segíts a diáktársaidnak, oszd meg a problémádat, vagy találj azonnali megoldást egyetlen kattintással!
-            </p>
+            <div className="space-y-2 relative text-center md:text-left">
+              <span className="text-[11px] font-black uppercase tracking-widest text-blue-500 flex items-center justify-center md:justify-start gap-1">
+                <Sparkles size={14} /> DiákFórum Közösségi Hub
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                Aktuális segélykérések
+              </h2>
+              <p className="text-xs sm:text-sm font-medium opacity-75 max-w-xl" style={{ color: 'var(--text-muted)' }}>
+                Segíts a diáktársaidnak, oszd meg a problémádat, vagy találj azonnali megoldást egyetlen kattintással!
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/25 transition-all text-sm uppercase tracking-wider whitespace-nowrap cursor-pointer active:scale-95"
+            >
+              + Új probléma megosztása
+            </button>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/25 transition-all text-sm uppercase tracking-wider whitespace-nowrap cursor-pointer active:scale-95"
-          >
-            + Új probléma megosztása
-          </button>
-        </div>
+          {/* ELEGÁNS EGYEDI SZŰRŐ SÁV */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+            <div className="text-xs font-black uppercase tracking-wider opacity-60 flex items-center gap-2">
+              <Filter size={14} /> Összesen {posts.length} bejegyzés
+            </div>
 
-        {/* ELEGÁNS EGYEDI SZŰRŐ SÁV */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-          <div className="text-xs font-black uppercase tracking-wider opacity-60 flex items-center gap-2">
-            <Filter size={14} /> Összesen {posts.length} bejegyzés
-          </div>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
 
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-
-            {/* 1. EGYEDI KATEGÓRIA DROPDOWN */}
-            <div className="relative" ref={categoryRef}>
-              <button
-                onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsSortOpen(false); }}
-                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
-                className="px-5 py-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-3 shadow-sm hover:border-blue-500 transition-all cursor-pointer"
-              >
-                <span>{currentCategoryName}</span>
-                <ChevronDown size={14} className={`transition-transform duration-200 ${isCategoryOpen ? 'rotate-180 text-blue-500' : 'opacity-60'}`} />
-              </button>
-
-              {isCategoryOpen && (
-                <div
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
-                  className="absolute right-0 mt-2 w-56 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
+              {/* 1. EGYEDI KATEGÓRIA DROPDOWN */}
+              <div className="relative" ref={categoryRef}>
+                <button
+                  onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsSortOpen(false); }}
+                  style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+                  className="px-5 py-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-3 shadow-sm hover:border-blue-500 transition-all cursor-pointer"
                 >
-                  <button
-                    onClick={() => { setSelectedCategory('all'); setIsCategoryOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${selectedCategory === 'all' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
+                  <span>{currentCategoryName}</span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isCategoryOpen ? 'rotate-180 text-blue-500' : 'opacity-60'}`} />
+                </button>
+
+                {isCategoryOpen && (
+                  <div
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+                    className="absolute right-0 mt-2 w-56 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
                   >
-                    <span>Minden kategória</span>
-                    {selectedCategory === 'all' && <Check size={14} />}
-                  </button>
-                  {categories.map((cat) => (
                     <button
-                      key={cat.id}
-                      onClick={() => { setSelectedCategory(cat.id); setIsCategoryOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${selectedCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
+                      onClick={() => { setSelectedCategory('all'); setIsCategoryOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${selectedCategory === 'all' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
                     >
-                      <span>{cat.name}</span>
-                      {selectedCategory === cat.id && <Check size={14} />}
+                      <span>Minden kategória</span>
+                      {selectedCategory === 'all' && <Check size={14} />}
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { setSelectedCategory(cat.id); setIsCategoryOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${selectedCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
+                      >
+                        <span>{cat.name}</span>
+                        {selectedCategory === cat.id && <Check size={14} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* 2. EGYEDI RENDEZÉS DROPDOWN */}
-            <div className="relative" ref={sortRef}>
-              <button
-                onClick={() => { setIsSortOpen(!isSortOpen); setIsCategoryOpen(false); }}
-                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
-                className="px-5 py-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-3 shadow-sm hover:border-blue-500 transition-all cursor-pointer"
-              >
-                <span>{currentSortName}</span>
-                <ChevronDown size={14} className={`transition-transform duration-200 ${isSortOpen ? 'rotate-180 text-blue-500' : 'opacity-60'}`} />
-              </button>
-
-              {isSortOpen && (
-                <div
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
-                  className="absolute right-0 mt-2 w-52 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
+              {/* 2. EGYEDI RENDEZÉS DROPDOWN */}
+              <div className="relative" ref={sortRef}>
+                <button
+                  onClick={() => { setIsSortOpen(!isSortOpen); setIsCategoryOpen(false); }}
+                  style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border)' }}
+                  className="px-5 py-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-3 shadow-sm hover:border-blue-500 transition-all cursor-pointer"
                 >
-                  <button
-                    onClick={() => { setSortOrder('desc'); setIsSortOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${sortOrder === 'desc' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
-                  >
-                    <span>Legújabb elöl</span>
-                    {sortOrder === 'desc' && <Check size={14} />}
-                  </button>
-                  <button
-                    onClick={() => { setSortOrder('asc'); setIsSortOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${sortOrder === 'asc' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
-                  >
-                    <span>Legrégebbi elöl</span>
-                    {sortOrder === 'asc' && <Check size={14} />}
-                  </button>
-                </div>
-              )}
-            </div>
+                  <span>{currentSortName}</span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isSortOpen ? 'rotate-180 text-blue-500' : 'opacity-60'}`} />
+                </button>
 
-          </div>
-        </div>
+                {isSortOpen && (
+                  <div
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+                    className="absolute right-0 mt-2 w-52 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 space-y-1"
+                  >
+                    <button
+                      onClick={() => { setSortOrder('desc'); setIsSortOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${sortOrder === 'desc' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
+                    >
+                      <span>Legújabb elöl</span>
+                      {sortOrder === 'desc' && <Check size={14} />}
+                    </button>
+                    <button
+                      onClick={() => { setSortOrder('asc'); setIsSortOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-between ${sortOrder === 'asc' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-blue-500/10'}`}
+                    >
+                      <span>Legrégebbi elöl</span>
+                      {sortOrder === 'asc' && <Check size={14} />}
+                    </button>
+                  </div>
+                )}
+              </div>
 
-        {/* POSZTOK LISTÁJA ÉS RANGLISTA ELRENDEZÉS */}
-        {loading ? (
-          <div className="text-center py-24 opacity-60 font-bold animate-pulse text-sm">Posztok betöltése folyamatban...</div>
-        ) : posts.length === 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2 text-center py-24 rounded-[2.5rem] border border-dashed opacity-75 space-y-2" style={{ borderColor: 'var(--border)' }}>
-              <p className="font-bold text-base">Nincs találat a kiválasztott szűrők alapján.</p>
-              <p className="text-xs opacity-60">Próbálj meg másik kategóriát választani vagy hozz létre egy új bejegyzést!</p>
-            </div>
-            <div className="lg:col-span-1">
-              <Leaderboard />
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* POSZTOK KÁRTYÁI (2 oszlop szélesség nagy képernyőn) */}
-            <div className="lg:col-span-2 space-y-12">
 
-              {/* 1. AKTÍV / NEM MEGOLDOTT POSZTOK */}
-              {(() => {
-                const activePosts = posts.filter(post => !post.is_solved);
-                return (
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-black uppercase tracking-wider text-blue-500">
-                      Aktív Problémák ({activePosts.length})
-                    </h2>
-                    {activePosts.length === 0 ? (
-                      <p className="text-xs opacity-60 italic">Nincsenek aktív bejegyzések.</p>
-                    ) : (
+          {/* POSZTOK LISTÁJA ÉS RANGLISTA ELRENDEZÉS */}
+          {loading ? (
+            <div className="text-center py-24 opacity-60 font-bold animate-pulse text-sm">Posztok betöltése folyamatban...</div>
+          ) : posts.length === 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              <div className="lg:col-span-2 text-center py-24 rounded-[2.5rem] border border-dashed opacity-75 space-y-2" style={{ borderColor: 'var(--border)' }}>
+                <p className="font-bold text-base">Nincs találat a kiválasztott szűrők alapján.</p>
+                <p className="text-xs opacity-60">Próbálj meg másik kategóriát választani vagy hozz létre egy új bejegyzést!</p>
+              </div>
+              <div className="lg:col-span-1">
+                <Leaderboard />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              {/* POSZTOK KÁRTYÁI (2 oszlop szélesség nagy képernyőn) */}
+              <div className="lg:col-span-2 space-y-12">
+
+                {/* 1. AKTÍV / NEM MEGOLDOTT POSZTOK */}
+                {(() => {
+                  const activePosts = posts.filter(post => !post.is_solved);
+                  return (
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-black uppercase tracking-wider text-blue-500">
+                        Aktív Problémák ({activePosts.length})
+                      </h2>
+                      {activePosts.length === 0 ? (
+                        <p className="text-xs opacity-60 italic">Nincsenek aktív bejegyzések.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {activePosts.map(post => (
+                            <PostCard
+                              key={post.id}
+                              post={post}
+                              onUpdate={fetchPosts}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* 2. MEGOLDOTT POSZTOK KÜLÖN SZEKCIÓBAN */}
+                {(() => {
+                  const solvedPosts = posts.filter(post => post.is_solved);
+                  if (solvedPosts.length === 0) return null;
+                  return (
+                    <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-green-500/10 text-green-500">
+                          ✓
+                        </span>
+                        <h2 className="text-xl font-black uppercase tracking-wider text-green-500">
+                          Megoldott Problémák ({solvedPosts.length})
+                        </h2>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {activePosts.map(post => (
+                        {solvedPosts.map(post => (
                           <PostCard
                             key={post.id}
                             post={post}
@@ -267,53 +291,26 @@ const fetchPosts = async () => {
                           />
                         ))}
                       </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 2. MEGOLDOTT POSZTOK KÜLÖN SZEKCIÓBAN */}
-              {(() => {
-                const solvedPosts = posts.filter(post => post.is_solved);
-                if (solvedPosts.length === 0) return null;
-                return (
-                  <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="p-2 rounded-xl bg-green-500/10 text-green-500">
-                        ✓
-                      </span>
-                      <h2 className="text-xl font-black uppercase tracking-wider text-green-500">
-                        Megoldott Problémák ({solvedPosts.length})
-                      </h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {solvedPosts.map(post => (
-                          <PostCard
-                            key={post.id}
-                            post={post}
-                            onUpdate={fetchPosts}
-                          />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
+              </div>
+
+              {/* JOBB OLDALI SÁV: RANGLISTA (1 oszlop szélesség nagy képernyőn) */}
+              <div className="lg:col-span-1 sticky top-24">
+                <Leaderboard />
+              </div>
             </div>
+          )}
 
-            {/* JOBB OLDALI SÁV: RANGLISTA (1 oszlop szélesség nagy képernyőn) */}
-            <div className="lg:col-span-1 sticky top-24">
-              <Leaderboard />
-            </div>
-          </div>
-        )}
-
-        {isModalOpen && (
-          <CreatePost
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={() => { setIsModalOpen(false); fetchPosts(); }}
-          />
-        )}
+          {isModalOpen && (
+            <CreatePost
+              onClose={() => setIsModalOpen(false)}
+              onSuccess={() => { setIsModalOpen(false); fetchPosts(); }}
+            />
+          )}
+        </div>
       </div>
 
       {/* VISSZA A TETEJÉRE GOMB */}
@@ -326,6 +323,8 @@ const fetchPosts = async () => {
           <ArrowUp size={20} />
         </button>
       )}
+
+      <Footer />
     </div>
   );
 }
